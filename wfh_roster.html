@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WFH Roster — O3 Interfaces</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f6f8fb;
+    color: #000;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .page {
+    flex: 1;
+    padding: 28px 48px 72px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* TOP BAR */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .title { font-size: 18px; letter-spacing: -0.3px; }
+  .title strong { font-weight: 700; }
+  .title span   { font-weight: 300; }
+  .actions { display: flex; gap: 6px; align-items: center; }
+  .btn {
+    padding: 7px 13px; border-radius: 6px;
+    font-size: 11px; font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer; border: none;
+    transition: opacity 0.15s; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .btn:hover { opacity: 0.78; }
+  .btn-policy  { background: #dfe4eb; color: #000; }
+  .btn-config  { background: #f0f0f0; color: #333; border: 1px solid #DDE2EB; }
+  .btn-pdf     { background: #000; color: #fff; }
+  .btn-png     { background: #1a1a1a; color: #fff; }
+
+  /* META ROW */
+  .meta-row { display: flex; align-items: center; margin-bottom: 16px; }
+  .meta-item { font-size: 10.5px; padding: 3px 0; white-space: nowrap; }
+  .meta-item .lbl { font-weight: 300; }
+  .meta-item .val { font-weight: 700; }
+  .meta-sep { width: 1px; height: 10px; background: #d9d9d9; margin: 0 10px; flex-shrink: 0; }
+
+  /* TABLE */
+  .table-wrap {
+    background: #fff;
+    border: 1px solid #DDE2EB;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #e6ebf2; }
+  thead th {
+    padding: 9px 14px; font-size: 10.5px; font-weight: 600;
+    text-align: center; border: none;
+    letter-spacing: 0.2px; text-transform: uppercase;
+  }
+  thead th.col-num  { width: 44px; }
+  thead th.col-name { width: 220px; text-align: left; }
+  tbody tr { border-bottom: 1px solid #f0f3f7; transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover:not(.na-row) { background: #fafbfc; }
+  tbody tr.na-row { opacity: 0.38; }
+  tbody td { padding: 8px 14px; font-size: 12px; text-align: center; vertical-align: middle; }
+  tbody td.col-num  { color: #bbb; width: 44px; font-size: 10px; font-weight: 400; }
+  tbody td.col-name { text-align: left; font-weight: 500; width: 220px; }
+  .badge {
+    display: inline-block; margin-left: 6px;
+    font-size: 9px; font-weight: 600;
+    padding: 1px 5px; border-radius: 3px; vertical-align: middle;
+  }
+  .badge-probation { color: #92400e; background: #fffbeb; border: 1px solid #fde68a; }
+  .badge-intern    { color: #065f46; background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .badge-notice    { color: #7c3aed; background: #f5f3ff; border: 1px solid #ddd6fe; }
+  .member-note {
+    font-size: 10px; color: #f59e0b; margin-left: 26px;
+    font-style: italic; letter-spacing: 0.1px;
+  }
+  .member-note-notice { color: #7c3aed; }
+  .btn-probation-confirm {
+    background: #f0fdf4; color: #059669;
+    border: 1px solid #86efac !important;
+  }
+  .btn-probation-confirm:hover { background: #dcfce7 !important; }
+  .pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 3px 11px; border-radius: 20px;
+    font-size: 10.5px; font-weight: 700; min-width: 58px; letter-spacing: 0.1px;
+  }
+  .pill-wfh    { background: #00ffbb; color: #000; }
+  .pill-onsite { background: #e4e9f0; color: #555; font-weight: 500; }
+  .pill-na     { color: #ddd; font-size: 13px; }
+
+  /* MODAL BASE */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35); z-index: 100;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff; border-radius: 12px;
+    position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  }
+  .modal-close {
+    position: absolute; top: 14px; right: 14px;
+    background: #f0f3f7; border: none; border-radius: 50%;
+    width: 26px; height: 26px; cursor: pointer;
+    font-size: 12px; color: #555;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: #e0e4ea; }
+
+  /* POLICY MODAL */
+  #policyModal .modal { width: 560px; max-height: 82vh; overflow-y: auto; padding: 28px; }
+  #policyModal .modal h2 { font-size: 14px; font-weight: 700; margin-bottom: 3px; letter-spacing: -0.2px; }
+  #policyModal .modal .modal-sub { font-size: 10.5px; color: #999; margin-bottom: 18px; }
+  .policy-section { margin-bottom: 16px; }
+  .policy-section h3 {
+    font-size: 10px; font-weight: 700; color: #000;
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 7px; padding-bottom: 5px;
+    border-bottom: 1px solid #f0f3f7;
+  }
+  .policy-section ul { list-style: none; padding: 0; }
+  .policy-section ul li {
+    font-size: 11.5px; color: #333; line-height: 1.65;
+    padding: 2px 0 2px 12px; position: relative;
+  }
+  .policy-section ul li::before { content: '·'; position: absolute; left: 0; color: #bbb; }
+  .policy-tag {
+    display: inline-block; font-size: 9px; font-weight: 600;
+    padding: 1px 5px; border-radius: 3px; vertical-align: middle; margin-left: 4px;
+  }
+  .tag-aug  { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .tag-prod { background: #fdf4ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+
+  /* PASSWORD DIALOG */
+  #pwdModal .modal { width: 340px; padding: 28px 28px 24px; }
+  #pwdModal .modal h2 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  #pwdModal .modal p  { font-size: 11.5px; color: #666; margin-bottom: 16px; line-height: 1.5; }
+  .pwd-input {
+    width: 100%; padding: 9px 12px; border-radius: 7px;
+    border: 1px solid #DDE2EB; font-size: 12px;
+    font-family: 'Inter', sans-serif; outline: none;
+    transition: border 0.15s; margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  .pwd-input:focus { border-color: #000; }
+  .pwd-error { font-size: 11px; color: #dc2626; margin-bottom: 10px; min-height: 16px; }
+  .pwd-actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .btn-cancel { background: #f0f3f7; color: #555; }
+  .btn-confirm { background: #000; color: #fff; }
+
+  /* CONFIGURE MODAL */
+  #configModal .modal { width: 600px; max-height: 85vh; overflow-y: auto; padding: 28px; }
+  #configModal .modal h2 { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+  #configModal .modal .modal-sub { font-size: 10.5px; color: #999; margin-bottom: 20px; }
+
+  .config-tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+  .config-tab {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid #DDE2EB;
+    background: #f8fafc; color: #888; font-size: 11px; font-weight: 600;
+    font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.12s;
+  }
+  .config-tab.active { background: #000; color: #fff; border-color: #000; }
+
+  .config-panel { display: none; }
+  .config-panel.active { display: block; }
+
+  /* Random panel */
+  .random-info {
+    background: #f8fafc; border: 1px solid #DDE2EB;
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  .random-info p { font-size: 11.5px; color: #555; line-height: 1.6; }
+  .random-info strong { color: #000; }
+  .btn-generate {
+    width: 100%; padding: 10px; border-radius: 7px;
+    background: #000; color: #fff; border: none;
+    font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn-generate:hover { opacity: 0.8; }
+
+  /* Custom panel */
+  .custom-grid { display: flex; flex-direction: column; gap: 1px; margin-bottom: 16px; }
+  .custom-header {
+    display: grid;
+    grid-template-columns: 180px repeat(5, 1fr);
+    background: #e6ebf2; border-radius: 6px 6px 0 0;
+    overflow: hidden;
+  }
+  .custom-header div {
+    padding: 7px 10px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.3px; text-align: center;
+  }
+  .custom-header div:first-child { text-align: left; }
+  .custom-row {
+    display: grid;
+    grid-template-columns: 180px repeat(5, 1fr);
+    border-bottom: 1px solid #f0f3f7;
+    background: #fff;
+  }
+  .custom-row:last-child { border-bottom: none; border-radius: 0 0 6px 6px; }
+  .custom-row:hover { background: #fafbfc; }
+  .custom-name {
+    padding: 8px 10px; font-size: 11.5px; font-weight: 500;
+    display: flex; align-items: center;
+  }
+  .custom-cell {
+    display: flex; align-items: center; justify-content: center; padding: 6px 4px;
+  }
+  .day-toggle {
+    width: 36px; height: 20px; border-radius: 10px;
+    border: 1.5px solid #DDE2EB; background: #f0f3f7;
+    cursor: pointer; transition: all 0.15s; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: #bbb;
+  }
+  .day-toggle.on { background: #00ffbb; border-color: #00ccaa; color: #005544; }
+  .day-toggle.over { border-color: #f87171 !important; }
+
+  .wfh-count-row {
+    display: grid;
+    grid-template-columns: 180px repeat(5, 1fr);
+    background: #fafbfc; border-top: 1.5px solid #DDE2EB;
+    border-radius: 0 0 8px 8px;
+  }
+  .wfh-count-row div {
+    padding: 6px 10px; font-size: 10px; text-align: center; color: #888;
+  }
+  .wfh-count-row div:first-child { text-align: left; font-weight: 600; color: #555; }
+  .wfh-count-row .count-ok   { color: #059669; font-weight: 700; }
+  .wfh-count-row .count-over { color: #dc2626; font-weight: 700; }
+  .wfh-count-row .count-low  { color: #d97706; font-weight: 700; }
+
+  .config-validation {
+    font-size: 11px; margin-bottom: 12px; min-height: 16px;
+  }
+  .config-validation.ok  { color: #059669; }
+  .config-validation.err { color: #dc2626; }
+
+  .config-actions { display: flex; gap: 6px; justify-content: flex-end; }
+
+  /* COMMUTE GROUPS PANEL */
+  .groups-info {
+    background: #f8fafc; border: 1px solid #DDE2EB;
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+    font-size: 11.5px; color: #555; line-height: 1.6;
+  }
+  .groups-add-form {
+    background: #f8fafc; border: 1px solid #DDE2EB;
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  .groups-form-row { display: flex; gap: 10px; align-items: flex-end; }
+  .groups-feedback { font-size: 11px; min-height: 14px; margin-top: 6px; }
+  .groups-feedback.ok  { color: #059669; }
+  .groups-feedback.err { color: #dc2626; }
+  .group-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid #f0f3f7;
+    font-size: 12px; transition: background 0.1s;
+  }
+  .group-row:last-child { border-bottom: none; }
+  .group-row:hover { background: #fafbfc; }
+  .group-members {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .group-member-chip {
+    background: #eef2ff; color: #4338ca;
+    border: 1px solid #c7d2fe; border-radius: 5px;
+    padding: 3px 10px; font-size: 11px; font-weight: 500;
+  }
+  .group-connector {
+    font-size: 10px; color: #aaa; font-weight: 600;
+  }
+  .group-num {
+    font-size: 10px; color: #ccc; margin-right: 4px;
+  }
+  .members-add-form {
+    background: #f8fafc; border: 1px solid #DDE2EB;
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  .members-form-row { display: flex; gap: 10px; align-items: flex-end; }
+  .members-feedback { font-size: 11px; min-height: 14px; margin-top: 6px; }
+  .members-feedback.ok  { color: #059669; }
+  .members-feedback.err { color: #dc2626; }
+  .members-section-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #888; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .members-count {
+    font-size: 10px; font-weight: 400; color: #bbb; text-transform: none; letter-spacing: 0;
+  }
+  .members-list {
+    border: 1px solid #DDE2EB; border-radius: 7px; overflow: hidden; background: #fff;
+  }
+  .member-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-bottom: 1px solid #f0f3f7;
+    font-size: 12px; transition: background 0.1s;
+  }
+  .member-row:last-child { border-bottom: none; }
+  .member-row:hover { background: #fafbfc; }
+  .member-row-left { display: flex; align-items: center; gap: 8px; }
+  .member-num { font-size: 10px; color: #ccc; width: 18px; }
+  .member-name { font-weight: 500; color: #000; }
+  .member-row-right { display: flex; align-items: center; gap: 8px; }
+  .member-badge {
+    font-size: 9px; font-weight: 600; padding: 1px 6px;
+    border-radius: 3px; white-space: nowrap;
+  }
+  .btn-remove {
+    background: none; border: 1px solid #fecaca; color: #ef4444;
+    border-radius: 5px; padding: 2px 8px; font-size: 10px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s;
+  }
+  .btn-remove:hover { background: #fef2f2; }
+  .btn-promote {
+    background: none; border: 1px solid #bbf7d0; color: #059669;
+    border-radius: 5px; padding: 2px 8px; font-size: 10px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s;
+  }
+  .btn-promote:hover { background: #f0fdf4; }
+  .members-empty {
+    padding: 14px; text-align: center; font-size: 11.5px; color: #bbb;
+  }
+  .members-note {
+    font-size: 10.5px; color: #aaa; margin-top: 12px; line-height: 1.5;
+  }
+  .member-confirm-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #fff5f5; border: 1px solid #fecaca; border-radius: 7px;
+    padding: 10px 14px; margin-top: 12px; gap: 12px;
+    font-size: 11.5px; color: #991b1b;
+  }
+  .btn-demote {
+    background: none; border: 1px solid #fed7aa; color: #c2410c;
+    border-radius: 5px; padding: 2px 8px; font-size: 10px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s;
+  }
+  .btn-demote:hover { background: #fff7ed; }
+  .btn-demote-confirm {
+    background: #fff7ed; border: 1px solid #fb923c !important;
+    color: #c2410c !important;
+  }
+  .btn-cancel-inline {
+    background: none; border: 1px solid #e5e7eb; color: #9ca3af;
+    border-radius: 5px; padding: 2px 6px; font-size: 10px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.12s;
+  }
+  .btn-cancel-inline:hover { background: #f9fafb; color: #6b7280; }
+  .na-inline { display: none; align-items: center; gap: 5px; }
+  .member-role-select {
+    font-size: 10px; font-family: 'Inter', sans-serif;
+    border: 1px solid #DDE2EB; border-radius: 5px;
+    padding: 2px 6px; color: #555; background: #f8fafc;
+    cursor: pointer; outline: none;
+  }
+
+  /* PASSWORD CHANGE PANEL */
+  .pwd-change-wrap { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+  .pwd-field-group { display: flex; flex-direction: column; gap: 4px; }
+  .pwd-label { font-size: 10.5px; font-weight: 600; color: #555; letter-spacing: 0.2px; }
+  .pwd-change-feedback { font-size: 11px; min-height: 16px; }
+  .pwd-change-feedback.ok  { color: #059669; }
+  .pwd-change-feedback.err { color: #dc2626; }
+  .pwd-strength { display: flex; gap: 4px; align-items: center; margin-top: -4px; }
+  .pwd-strength-bar {
+    height: 3px; border-radius: 2px; flex: 1; background: #e5e7eb; transition: background 0.2s;
+  }
+  .pwd-strength-label { font-size: 10px; color: #aaa; white-space: nowrap; }
+
+  /* FOOTER */
+  .footer {
+    background: #f2f2fa; padding: 0 48px;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    border-top: 1px solid #e5e5f0; z-index: 10;
+  }
+  .footer-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 0; max-width: 1200px; margin: 0 auto; width: 100%;
+  }
+  .footer-name { font-size: 11px; white-space: nowrap; }
+  .footer-name strong { font-weight: 700; }
+  .footer-name span   { font-weight: 400; }
+
+  @media print {
+    body { background: #f6f8fb; }
+    .actions, .footer, .modal-overlay { display: none !important; }
+    .page { padding-bottom: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page" id="main-page">
+  <div class="top-bar">
+    <h1 class="title"><strong>WFH</strong> <span>Weekly Roster</span></h1>
+    <div class="actions">
+      <button class="btn btn-policy" onclick="openModal('policyModal')">View Team Policy</button>
+      <button class="btn btn-config" onclick="openPwdGate()">⚙ Configure</button>
+      <button class="btn btn-pdf" onclick="exportAs('pdf')">↓ PDF</button>
+      <button class="btn btn-png" onclick="exportAs('png')">↓ PNG</button>
+    </div>
+  </div>
+
+  <div class="meta-row">
+    <div class="meta-item"><span class="lbl">Headcount </span><span class="val" id="meta-headcount">13</span></div>
+    <div class="meta-sep"></div>
+    <div class="meta-item"><span class="lbl">WFH Eligible </span><span class="val" id="meta-eligible">10</span></div>
+    <div class="meta-sep"></div>
+    <div class="meta-item"><span class="lbl">WFH Per Day </span><span class="val" id="meta-wfh-day">4</span><span class="lbl"> (4–6)</span></div>
+    <div class="meta-sep"></div>
+    <div class="meta-item"><span class="lbl">Onsite Per Day </span><span class="val" id="meta-onsite-day">6</span></div>
+    <div class="meta-sep"></div>
+    <div class="meta-item"><span class="lbl">WFH Days / Person </span><span class="val">2 / week</span></div>
+  </div>
+
+  <div class="table-wrap">
+    <div id="roster-panel"></div>
+  </div>
+</div>
+
+<!-- POLICY MODAL -->
+<div class="modal-overlay" id="policyModal" onclick="if(event.target===this)closeModal('policyModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('policyModal')">✕</button>
+    <h2>Work From Home Policy</h2>
+    <p class="modal-sub">O3 Interfaces &nbsp;·&nbsp; Design Team &nbsp;·&nbsp; Refer to full HR policy for complete provisions</p>
+
+    <div class="policy-section">
+      <h3>1. Purpose</h3>
+      <ul>
+        <li>This policy establishes a standardised framework governing WFH arrangements, ensuring operational efficiency, accountability, and business continuity while enabling controlled flexibility for employees.</li>
+        <li>WFH is a privilege extended by the organisation — not a contractual entitlement — and is contingent upon business need, individual performance, role suitability, and full adherence to this policy.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>2. Scope &amp; Eligibility</h3>
+      <ul>
+        <li>Applies to all permanent, full-time employees whose roles are operationally suitable for remote work.</li>
+        <li>Employees on probation, interns, trainees, contractual or part-time staff are <strong>not eligible</strong> unless explicitly approved via the Exception Approval Process.</li>
+        <li>Employees on an active PIP, subject to disciplinary proceedings, or under a termination notice are excluded.</li>
+        <li>Eligible employees must have completed probation, achieved a minimum "Meets Expectations" rating, and submitted a Home Workspace Self-Certification Form to HR.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>3. Entitlement &amp; Scheduling</h3>
+      <ul>
+        <li>Each eligible employee is entitled to up to <strong>2 WFH days per week</strong>.</li>
+        <li>Monthly WFH rosters must be submitted to HR by the <strong>25th of the preceding month</strong>, approved by the Department Head, and distributed to all team members in writing.</li>
+        <li>WFH days are <strong>non-transferable</strong> — employees may not swap or exchange days.</li>
+        <li>Managers are responsible for ensuring adequate onsite coverage and operational continuity at all times.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>4. Business Requirement Overrides</h3>
+      <ul>
+        <li>Employees may be required to report onsite on a designated WFH day due to business exigencies. A minimum of <strong>24 hours' notice</strong> must be given except in genuine emergencies.</li>
+        <li>Overrides are capped at <strong>2 per employee per calendar month</strong> and must be logged by the Manager in the HR system prior to activation.</li>
+        <li>WFH days impacted by overrides will not be compensated, rescheduled, or carried forward.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>5. Availability &amp; Conduct</h3>
+      <ul>
+        <li>Employees must adhere to official working hours and remain fully available throughout.</li>
+        <li>All official communications must be responded to within <strong>10 minutes</strong> on LarkSuite during working hours. Employees must be able to join an ad hoc call within <strong>5 minutes</strong> of being contacted.</li>
+        <li>Attendance at all scheduled meetings is mandatory. <strong>Camera must remain on</strong> during virtual meetings. Camera-off exceptions require written approval from the reporting Manager and must be logged in the HR system.</li>
+        <li>Attendance must be marked daily via <strong>PayPeople</strong>. Daily deliverables must be logged on <strong>LarkSuite</strong> at the start and close of each WFH day.</li>
+        <li>If unable to work on a scheduled WFH day, the employee must apply for leave — WFH is not a substitute for leave.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>6. Data Security</h3>
+      <ul>
+        <li>Company data must not be accessed over unsecured or public Wi-Fi without an approved VPN connection.</li>
+        <li>Personal devices may only be used where explicitly authorised by IT.</li>
+        <li>All confidentiality and NDA obligations remain fully in force during remote work.</li>
+        <li>Any data security incident during WFH must be reported to IT and HR immediately.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>7. Dot-Based Accountability</h3>
+      <ul>
+        <li>Each employee is allocated <strong>3 dots per calendar year</strong> (January–December). Zero dots is the expected outcome for a compliant employee.</li>
+        <li><strong>Dot 1</strong> — Formal written warning + 30-day enhanced monitoring period.</li>
+        <li><strong>Dot 2</strong> — WFH suspended for 30 calendar days. Reinstatement subject to satisfactory performance assessment.</li>
+        <li><strong>Dot 3</strong> — Full revocation of WFH for the remainder of the calendar year.</li>
+        <li>No dot may be issued verbally or retroactively. The employee has <strong>3 working days</strong> to submit a written response to any dot notice. HR issues a final decision within 5 working days.</li>
+        <li>Dots expire on <strong>31 December</strong> each year and do not carry forward.</li>
+        <li>Grounds for dot allocation include: missed deadlines without valid justification, unattended meetings, delayed responsiveness, and consistent underperformance.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>8. Performance</h3>
+      <ul>
+        <li>WFH is strictly performance-driven. Employees must maintain productivity, quality, and adherence to timelines.</li>
+        <li>A performance decline is defined as 2+ missed committed deadlines in any rolling 4-week WFH period, KPI scores below minimum threshold for 2 consecutive WFH weeks, or a formal written performance concern raised by the Manager.</li>
+        <li>Corrective action follows a progressive sequence: written warning → temporary WFH suspension → Performance Improvement Plan.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>9. Force Majeure &amp; Outages</h3>
+      <ul>
+        <li>If rendered unavailable due to load-shedding or network outage, the employee must notify their Manager within <strong>15 minutes</strong> via any available channel.</li>
+        <li>If the disruption exceeds <strong>2 continuous hours</strong>, the employee must report onsite or apply for leave.</li>
+        <li>Outages reported and logged in good faith will not attract a dot allocation.</li>
+      </ul>
+    </div>
+
+    <div class="policy-section">
+      <h3>10. Non-Compliance</h3>
+      <ul>
+        <li>Non-compliance may result in disciplinary action, including revocation of WFH privileges.</li>
+        <li>Serious incidents — including misrepresentation of work status, falsification of output records, or a data security breach — may be referred directly to the formal disciplinary process, bypassing the dot ladder.</li>
+        <li>This policy is reviewed annually. Any material amendment will be communicated in writing a minimum of <strong>14 calendar days</strong> before the effective date.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD DIALOG -->
+<div class="modal-overlay" id="pwdModal" onclick="if(event.target===this)closeModal('pwdModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('pwdModal')">✕</button>
+    <h2>Restricted Access</h2>
+    <p>Enter the admin password to access roster configuration.</p>
+    <input class="pwd-input" type="password" id="pwdInput" placeholder="Password"
+      onkeydown="if(event.key==='Enter')verifyPassword()">
+    <div class="pwd-error" id="pwdError"></div>
+    <div class="pwd-actions">
+      <button class="btn btn-cancel" onclick="closeModal('pwdModal')">Cancel</button>
+      <button class="btn btn-confirm" onclick="verifyPassword()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIGURE MODAL -->
+<div class="modal-overlay" id="configModal" onclick="if(event.target===this)closeModal('configModal')">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('configModal')">✕</button>
+    <h2>Configure Roster</h2>
+    <p class="modal-sub">Changes apply immediately to the roster view.</p>
+
+    <div class="config-tabs">
+      <button class="config-tab active" onclick="switchConfigTab('random', this)">Random Assignment</button>
+      <button class="config-tab" onclick="switchConfigTab('custom', this)">Custom Assignment</button>
+      <button class="config-tab" onclick="switchConfigTab('groups', this)">Commute Groups</button>
+      <button class="config-tab" onclick="switchConfigTab('members', this)">Team Members</button>
+      <button class="config-tab" onclick="switchConfigTab('password', this)">Change Password</button>
+    </div>
+
+    <!-- RANDOM PANEL -->
+    <div class="config-panel active" id="panel-random">
+      <div class="random-info">
+        <p>Automatically assigns <strong>2 non-consecutive WFH days</strong> to each eligible team member while maintaining <strong>exactly 4 WFH per day</strong> across all 5 days.</p>
+      </div>
+      <div id="random-preview" style="margin-bottom:14px;font-size:11.5px;color:#666;line-height:1.7;"></div>
+      <button class="btn-generate" onclick="generateRandom()">↻ Generate Random Schedule</button>
+      <div style="margin-top:10px;display:flex;gap:6px;justify-content:flex-end;">
+        <button class="btn btn-cancel" onclick="closeModal('configModal')">Cancel</button>
+        <button class="btn btn-confirm" onclick="applyRandom()">Apply</button>
+      </div>
+    </div>
+
+    <!-- CUSTOM PANEL -->
+    <div class="config-panel" id="panel-custom">
+      <div class="custom-grid" id="custom-grid"></div>
+      <div class="wfh-count-row" id="wfh-count-row"></div>
+      <div class="config-validation" id="config-validation"></div>
+      <div class="config-actions">
+        <button class="btn btn-cancel" onclick="closeModal('configModal')">Cancel</button>
+        <button class="btn btn-confirm" onclick="applyCustom()">Apply</button>
+      </div>
+    </div>
+
+    <!-- COMMUTE GROUPS PANEL -->
+    <div class="config-panel" id="panel-groups">
+      <div class="groups-info">
+        People in the same commute group are always assigned <strong>identical WFH days</strong> in both random and auto-assign. Groups of exactly 2 eligible members.
+      </div>
+
+      <!-- Add group form -->
+      <div class="groups-add-form">
+        <div class="groups-form-row">
+          <div class="pwd-field-group" style="flex:1">
+            <label class="pwd-label">Person A</label>
+            <select class="pwd-input" id="group-person-a" style="letter-spacing:normal;cursor:pointer">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div style="padding-top:20px;font-size:16px;color:#aaa;flex-shrink:0">+</div>
+          <div class="pwd-field-group" style="flex:1">
+            <label class="pwd-label">Person B</label>
+            <select class="pwd-input" id="group-person-b" style="letter-spacing:normal;cursor:pointer">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="pwd-field-group" style="justify-content:flex-end;padding-top:18px;flex-shrink:0">
+            <button class="btn btn-confirm" onclick="addCommuteGroup()" style="height:36px;padding:0 16px">+ Add Group</button>
+          </div>
+        </div>
+        <div class="groups-feedback" id="groups-feedback"></div>
+      </div>
+
+      <!-- Existing groups -->
+      <div class="members-section-label" style="margin-bottom:6px">
+        Active Groups <span class="members-count" id="groups-count"></span>
+      </div>
+      <div class="members-list" id="groups-list"></div>
+      <div class="members-note" style="margin-top:10px">
+        Removing a group does not affect current WFH days — changes apply on next randomise or reconfigure.
+      </div>
+    </div>
+
+    <!-- TEAM MEMBERS PANEL -->
+    <div class="config-panel" id="panel-members">
+
+      <!-- Add new member form -->
+      <div class="members-add-form">
+        <div class="members-form-row">
+          <div class="pwd-field-group" style="flex:1">
+            <label class="pwd-label">Full Name</label>
+            <input class="pwd-input" type="text" id="new-name" placeholder="e.g. Sara Malik" style="letter-spacing:normal">
+          </div>
+          <div class="pwd-field-group" style="width:140px">
+            <label class="pwd-label">Role</label>
+            <select class="pwd-input" id="new-role" style="letter-spacing:normal;cursor:pointer">
+              <option value="eligible">Eligible (WFH)</option>
+              <option value="probation">Probation</option>
+              <option value="intern">Intern</option>
+            </select>
+          </div>
+          <div class="pwd-field-group" style="justify-content:flex-end;padding-top:18px">
+            <button class="btn btn-confirm" onclick="addMember()" style="height:36px;padding:0 16px">+ Add</button>
+          </div>
+        </div>
+        <div class="members-feedback" id="members-feedback"></div>
+      </div>
+
+      <!-- Eligible members list -->
+      <div class="members-section-label">Eligible Members <span id="eligible-count" class="members-count"></span></div>
+      <div class="members-list" id="members-eligible"></div>
+
+      <!-- NA members list -->
+      <div class="members-section-label" style="margin-top:12px">Not Applicable <span class="members-count">Probation / Interns</span></div>
+      <div class="members-list" id="members-na"></div>
+
+      <div class="members-note">Removing an eligible member recalculates the WFH schedule automatically.</div>
+
+      <!-- Inline confirm bar -->
+      <div class="member-confirm-bar" id="member-confirm-bar" style="display:none">
+        <span id="member-confirm-msg"></span>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-cancel" onclick="hideMemberConfirm()">Cancel</button>
+          <button class="btn btn-confirm-action" style="background:#ef4444;color:#fff" onclick="executeMemberAction()">Yes, Remove</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSWORD PANEL -->
+    <div class="config-panel" id="panel-password">
+      <div class="pwd-change-wrap">
+        <div class="pwd-field-group">
+          <label class="pwd-label">Current Password</label>
+          <input class="pwd-input" type="password" id="chg-current" placeholder="Enter current password">
+        </div>
+        <div class="pwd-field-group">
+          <label class="pwd-label">New Password</label>
+          <input class="pwd-input" type="password" id="chg-new" placeholder="Min. 6 characters" oninput="updateStrengthMeter()">
+        </div>
+        <div class="pwd-field-group">
+          <label class="pwd-label">Confirm New Password</label>
+          <input class="pwd-input" type="password" id="chg-confirm" placeholder="Repeat new password">
+        </div>
+        <div class="pwd-change-feedback" id="chg-feedback"></div>
+        <div class="pwd-strength" id="pwd-strength"></div>
+      </div>
+      <div class="config-actions" style="margin-top:4px;">
+        <button class="btn btn-cancel" onclick="closeModal('configModal')">Cancel</button>
+        <button class="btn btn-confirm" onclick="changePassword()">Update Password</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer" id="footer">
+  <div class="footer-inner">
+    <svg width="24" height="26" viewBox="0 0 34 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11.3925 2.48557C16.0694 0.972885 21.3498 1.58814 25.6698 4.65744C26.4451 5.20346 27.1471 5.80581 27.787 6.43967C24.1747 5.68019 20.2846 7.12978 18.0693 10.425C15.0908 14.8375 16.1741 20.9012 20.4755 23.9328C24.1061 26.4936 28.8877 26.0857 32.0693 23.2678C31.5893 24.9058 30.8696 26.5062 29.8544 28.0061L29.8485 28.0002C24.7224 35.6013 14.4882 37.5214 7.06046 32.2678C0.0575226 27.3092 -2.00447 17.7186 2.0878 10.2619C2.19237 10.3498 2.30952 10.4378 2.43253 10.5256C5.22017 12.4965 9.05419 11.7749 10.9804 8.91916C12.3034 6.96087 12.3894 4.47526 11.3925 2.48557ZM21.5585 8.68088C20.7096 10.3943 20.87 12.5159 22.1376 14.0598C23.8238 16.1308 26.8387 16.4068 28.8632 14.6809C30.5617 13.231 31.0117 10.8016 30.1132 8.82444C30.8208 9.28889 31.4791 9.87918 32.0575 10.5696H32.0507C34.9553 14.1535 34.4883 19.4953 30.9931 22.4768C27.7008 25.2699 22.8694 25.0061 19.9032 21.9807C19.9525 21.9367 20.0143 21.8864 20.0819 21.8362C21.3802 20.7378 21.5528 18.7295 20.4638 17.3801C19.7069 16.4637 18.5554 16.0805 17.4784 16.3127C17.3862 13.7771 18.3959 11.2292 20.4325 9.50315C20.7893 9.18944 21.171 8.92559 21.5585 8.68088ZM0.777258 4.70139C1.1157 1.7766 3.70623 -0.307622 6.56144 0.0373271C9.23826 0.351151 11.2078 2.74877 11.1464 5.46018C11.0973 5.46015 11.0483 5.44172 11.0175 5.44162C9.94685 5.30983 8.96819 6.09423 8.83878 7.17991C8.75878 7.93311 9.09714 8.64301 9.65714 9.051C8.56792 10.1807 6.99866 10.821 5.34952 10.6076C5.04196 10.5763 4.753 10.5066 4.48234 10.425C5.6144 10.0922 6.5 9.09409 6.64152 7.82639C6.83206 6.15078 5.65117 4.60708 4.01456 4.41233C2.61764 4.2303 1.33724 5.08403 0.838781 6.36448C0.740332 5.82475 0.709891 5.26607 0.771399 4.68869L0.777258 4.70139Z" fill="#BCC4D1"/>
+    </svg>
+    <span id="sync-status" style="font-size:10px;color:#94a3b8"></span>
+    <p class="footer-name"><strong>O3 Interfaces</strong> <span>Design Team</span></p>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// ── DATA ──
+const DAYS = ["Mon","Tue","Wed","Thu","Fri"];
+const DEFAULT_PASSWORD = "o3admin";
+const VALID_PAIRS = [
+  ["Mon","Wed"],["Mon","Thu"],["Mon","Fri"],
+  ["Tue","Thu"],["Tue","Fri"],["Wed","Fri"]
+];
+
+// Linked commute groups — persisted in state
+let LINKED_GROUPS = [
+  ["Owais Pasha", "Abdur Rehman"]
+];
+
+function getPassword() { return localStorage.getItem('o3_roster_pwd') || DEFAULT_PASSWORD; }
+function setPassword(pwd) { localStorage.setItem('o3_roster_pwd', pwd); }
+
+const DEFAULT_ELIGIBLE = [
+  "Ansar Shahzad","Abdullah Khan","Zarar Yousuf","Imaan Shahid",
+  "Safiullah Nadeem","Owais Pasha","Hasnain Zahid","Abdur Rehman",
+  "Ijmaal Hamdani"
+];
+const DEFAULT_NA = [
+  { name:"Maryam Batool", badge:"Probation",     cls:"badge-probation" },
+  { name:"Rida E Zainab", badge:"Intern",        cls:"badge-intern"    },
+  { name:"Neha Khan",     badge:"Intern",        cls:"badge-intern"    },
+  { name:"Fatima Ahmed",  badge:"Notice Period", cls:"badge-notice"    },
+];
+const DEFAULT_SCHEDULE = [
+  // Ansar       Abdullah     Zarar        Imaan        Safiullah
+  ["Mon","Wed"], ["Mon","Thu"],["Tue","Thu"],["Tue","Fri"],["Wed","Fri"],
+  // Owais       Hasnain      Abdur        Ijmaal
+  ["Tue","Fri"], ["Mon","Thu"],["Tue","Thu"],["Wed","Fri"],
+];
+
+// ── STATE (Vercel KV via API) ──
+let eligiblePeople  = [...DEFAULT_ELIGIBLE];
+let naRows          = DEFAULT_NA.map((r,i) => ({ ...r, num: DEFAULT_ELIGIBLE.length + i + 1 }));
+let currentSchedule = DEFAULT_SCHEDULE.map(p => [...p]);
+
+function defaultState() {
+  return {
+    eligible: [...DEFAULT_ELIGIBLE],
+    na: DEFAULT_NA.map(r => ({ ...r })),
+    schedule: DEFAULT_SCHEDULE.map(p => [...p])
+  };
+}
+
+function applyState(p) {
+  if (p && Array.isArray(p.eligible) && Array.isArray(p.na) && Array.isArray(p.schedule)
+      && p.schedule.length === p.eligible.length) {
+    eligiblePeople  = p.eligible;
+    naRows          = p.na.map((r,i) => ({ ...r, num: p.eligible.length + i + 1 }));
+    currentSchedule = p.schedule;
+    if (Array.isArray(p.groups)) LINKED_GROUPS = p.groups;
+  }
+}
+
+async function loadState() {
+  setSyncStatus('loading');
+  try {
+    const res = await fetch('/api/state');
+    if (!res.ok) throw new Error('fetch failed');
+    const json = await res.json();
+    if (json.exists && json.data) applyState(json.data);
+    setSyncStatus('saved');
+  } catch(e) {
+    console.warn('Could not load from KV, using defaults:', e);
+    setSyncStatus('error');
+  }
+}
+
+async function saveState() {
+  setSyncStatus('saving');
+  const payload = {
+    eligible: eligiblePeople,
+    na: naRows.map(({name,badge,cls}) => ({name,badge,cls})),
+    schedule: currentSchedule,
+    groups: LINKED_GROUPS
+  };
+  try {
+    const res = await fetch('/api/state', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('save failed');
+    setSyncStatus('saved');
+  } catch(e) {
+    console.error('Save failed:', e);
+    setSyncStatus('error');
+  }
+}
+
+function setSyncStatus(status) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const map = {
+    loading: { text: 'Loading...', color: '#94a3b8' },
+    saving:  { text: 'Saving...',  color: '#f59e0b' },
+    saved:   { text: 'All changes saved', color: '#10b981' },
+    error:   { text: 'Sync error — changes may not persist', color: '#ef4444' },
+  };
+  const s = map[status] || map.saved;
+  el.textContent = s.text;
+  el.style.color = s.color;
+}
+
+// Clear old stale keys from previous versions
+try { localStorage.removeItem('o3_roster_members'); localStorage.removeItem('o3_roster_state'); } catch(e) {}
+
+// ── RENDER ──
+function renderRoster() {
+  let html = `<table><thead><tr>
+    <th class="col-num">#</th>
+    <th class="col-name">Name</th>
+    ${DAYS.map(d=>`<th>${d}</th>`).join('')}
+  </tr></thead><tbody>`;
+
+  eligiblePeople.forEach((name, i) => {
+    const wfh = currentSchedule[i] || [];
+    html += `<tr>
+      <td class="col-num">${i+1}</td>
+      <td class="col-name">${name}</td>
+      ${DAYS.map(d=>`<td>${wfh.includes(d)
+        ? '<span class="pill pill-wfh">WFH</span>'
+        : '<span class="pill pill-onsite">Onsite</span>'
+      }</td>`).join('')}
+    </tr>`;
+  });
+
+  naRows.forEach(r => {
+    html += `<tr class="na-row">
+      <td class="col-num">${r.num}</td>
+      <td class="col-name">${r.name} <span class="badge ${r.cls}">${r.badge}</span></td>
+      ${DAYS.map(()=>`<td><span class="pill-na">—</span></td>`).join('')}
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  document.getElementById('roster-panel').innerHTML = html;
+  updateMeta();
+}
+
+function updateMeta() {
+  const n = eligiblePeople.length;
+  const total = DAYS.reduce((sum,d) => sum + currentSchedule.filter(s=>s.includes(d)).length, 0);
+  const avg = n > 0 ? Math.round(total / 5) : 0;
+  document.getElementById('meta-wfh-day').textContent = avg;
+  document.getElementById('meta-onsite-day').textContent = Math.max(0, n - avg);
+  document.getElementById('meta-headcount').textContent = n + naRows.length;
+  document.getElementById('meta-eligible').textContent = n;
+}
+
+// ── MODAL HELPERS ──
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  if (id === 'pwdModal') {
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdError').textContent = '';
+  }
+}
+
+// ── PASSWORD GATE ──
+function openPwdGate() {
+  openModal('pwdModal');
+  setTimeout(() => document.getElementById('pwdInput').focus(), 100);
+}
+
+function verifyPassword() {
+  const val = document.getElementById('pwdInput').value;
+  if (val === getPassword()) {
+    closeModal('pwdModal');
+    openConfigModal();
+  } else {
+    document.getElementById('pwdError').textContent = 'Incorrect password. Please try again.';
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('pwdInput').focus();
+  }
+}
+
+// ── CHANGE PASSWORD ──
+function changePassword() {
+  const current  = document.getElementById('chg-current').value;
+  const newPwd   = document.getElementById('chg-new').value;
+  const confirm  = document.getElementById('chg-confirm').value;
+  const feedback = document.getElementById('chg-feedback');
+  if (current !== getPassword()) {
+    feedback.className = 'pwd-change-feedback err';
+    feedback.textContent = '✗ Current password is incorrect.';
+    document.getElementById('chg-current').value = ''; return;
+  }
+  if (newPwd.length < 6) {
+    feedback.className = 'pwd-change-feedback err';
+    feedback.textContent = '✗ New password must be at least 6 characters.'; return;
+  }
+  if (newPwd !== confirm) {
+    feedback.className = 'pwd-change-feedback err';
+    feedback.textContent = '✗ Passwords do not match.';
+    document.getElementById('chg-confirm').value = ''; return;
+  }
+  setPassword(newPwd);
+  feedback.className = 'pwd-change-feedback ok';
+  feedback.textContent = '✓ Password updated successfully.';
+  ['chg-current','chg-new','chg-confirm'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('pwd-strength').innerHTML = '';
+  setTimeout(() => { feedback.textContent = ''; }, 3000);
+}
+
+function updateStrengthMeter() {
+  const val = document.getElementById('chg-new').value;
+  const el  = document.getElementById('pwd-strength');
+  if (!val) { el.innerHTML = ''; return; }
+  let score = 0;
+  if (val.length >= 6)  score++;
+  if (val.length >= 10) score++;
+  if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+  const labels = ['','Weak','Fair','Good','Strong','Very Strong'];
+  const colors = ['','#ef4444','#f97316','#eab308','#22c55e','#059669'];
+  let bars = '';
+  for (let i = 1; i <= 5; i++)
+    bars += `<div class="pwd-strength-bar" style="background:${i<=score?colors[score]:'#e5e7eb'}"></div>`;
+  el.innerHTML = bars + `<span class="pwd-strength-label" style="color:${colors[score]}">${labels[score]}</span>`;
+}
+
+// ── CONFIG MODAL ──
+let pendingRandom = null;
+
+function openConfigModal() {
+  pendingRandom = null;
+  document.getElementById('random-preview').innerHTML = '';
+  buildCustomGrid();
+  switchConfigTab('random', document.querySelector('.config-tab'));
+  openModal('configModal');
+}
+
+function switchConfigTab(tab, btn) {
+  document.querySelectorAll('.config-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  if (tab === 'password') {
+    ['chg-current','chg-new','chg-confirm'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('chg-feedback').textContent = '';
+    document.getElementById('pwd-strength').innerHTML = '';
+  }
+  if (tab === 'members') {
+    document.getElementById('new-name').value = '';
+    document.getElementById('members-feedback').textContent = '';
+    hideMemberConfirm();
+    buildMembersList();
+  }
+  if (tab === 'groups') {
+    buildGroupsPanel();
+  }
+}
+
+// ── COMMUTE GROUPS ──
+function buildGroupsPanel() {
+  const feedback = document.getElementById('groups-feedback');
+  if (feedback) feedback.textContent = '';
+
+  // Populate dropdowns with eligible people
+  ['group-person-a', 'group-person-b'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Select —</option>' +
+      eligiblePeople.map(n => `<option value="${n}"${n === current ? ' selected' : ''}>${n}</option>`).join('');
+  });
+
+  // Render existing groups
+  const list = document.getElementById('groups-list');
+  const count = document.getElementById('groups-count');
+  if (count) count.textContent = `${LINKED_GROUPS.length} group${LINKED_GROUPS.length !== 1 ? 's' : ''}`;
+
+  if (LINKED_GROUPS.length === 0) {
+    list.innerHTML = `<div class="members-empty">No commute groups defined.</div>`;
+    return;
+  }
+
+  list.innerHTML = LINKED_GROUPS.map((group, i) => `
+    <div class="group-row">
+      <div class="group-members">
+        <span class="group-num">${i + 1}</span>
+        <span class="group-member-chip">${group[0]}</span>
+        <span class="group-connector">commutes with</span>
+        <span class="group-member-chip">${group[1]}</span>
+      </div>
+      <button class="btn-remove" data-idx="${i}">Remove</button>
+    </div>`).join('');
+
+  list.querySelectorAll('.btn-remove').forEach(btn => {
+    btn.addEventListener('click', () => removeCommuteGroup(parseInt(btn.dataset.idx)));
+  });
+}
+
+function addCommuteGroup() {
+  const a = document.getElementById('group-person-a').value;
+  const b = document.getElementById('group-person-b').value;
+  const feedback = document.getElementById('groups-feedback');
+
+  if (!a || !b) {
+    feedback.className = 'groups-feedback err';
+    feedback.textContent = '✗ Please select both people.'; return;
+  }
+  if (a === b) {
+    feedback.className = 'groups-feedback err';
+    feedback.textContent = '✗ Cannot link a person with themselves.'; return;
+  }
+  // Check if either person is already in a group
+  const alreadyLinked = LINKED_GROUPS.some(g => g.includes(a) || g.includes(b));
+  if (alreadyLinked) {
+    feedback.className = 'groups-feedback err';
+    feedback.textContent = '✗ One or both people are already in a commute group.'; return;
+  }
+  // Check duplicate group
+  const isDupe = LINKED_GROUPS.some(g =>
+    (g[0] === a && g[1] === b) || (g[0] === b && g[1] === a)
+  );
+  if (isDupe) {
+    feedback.className = 'groups-feedback err';
+    feedback.textContent = '✗ This group already exists.'; return;
+  }
+
+  LINKED_GROUPS.push([a, b]);
+  saveState();
+  buildGroupsPanel();
+  // Reset selects
+  document.getElementById('group-person-a').value = '';
+  document.getElementById('group-person-b').value = '';
+  feedback.className = 'groups-feedback ok';
+  feedback.textContent = `✓ ${a} and ${b} are now a commute group.`;
+  setTimeout(() => { feedback.textContent = ''; }, 3000);
+  // Rebuild custom grid and roster to show linked tags
+  buildCustomGrid();
+  renderRoster();
+}
+
+function removeCommuteGroup(idx) {
+  const group = LINKED_GROUPS[idx];
+  if (!group) return;
+  LINKED_GROUPS.splice(idx, 1);
+  saveState();
+  buildGroupsPanel();
+  buildCustomGrid();
+  renderRoster();
+}
+
+// ── MEMBER MANAGEMENT ──
+function syncMembers() {
+  naRows = naRows.map((r, i) => ({ ...r, num: eligiblePeople.length + i + 1 }));
+  saveState();
+}
+
+// Inline confirm state
+let pendingAction = null;
+
+function requestConfirm(actionKey, label, onConfirm) {
+  pendingAction = onConfirm;
+  const el = document.getElementById('member-confirm-bar');
+  el.style.display = 'flex';
+  document.getElementById('member-confirm-msg').textContent = `Remove "${label}" from roster?`;
+}
+
+function hideMemberConfirm() {
+  pendingAction = null;
+  const el = document.getElementById('member-confirm-bar');
+  if (el) el.style.display = 'none';
+  // Reset button back to remove style
+  const actionBtn = el && el.querySelector('.btn-confirm-action');
+  if (actionBtn) {
+    actionBtn.textContent = 'Yes, Remove';
+    actionBtn.style.background = '#ef4444';
+  }
+}
+
+function executeMemberAction() {
+  if (pendingAction) { pendingAction(); hideMemberConfirm(); }
+}
+
+function addMember() {
+  const nameInput = document.getElementById('new-name');
+  const roleInput = document.getElementById('new-role');
+  const feedback  = document.getElementById('members-feedback');
+  const name = nameInput.value.trim();
+  const role = roleInput.value;
+
+  if (!name) {
+    feedback.className = 'members-feedback err';
+    feedback.textContent = '✗ Name cannot be empty.'; return;
+  }
+  const allNames = [...eligiblePeople, ...naRows.map(r=>r.name)];
+  if (allNames.some(n => n.toLowerCase() === name.toLowerCase())) {
+    feedback.className = 'members-feedback err';
+    feedback.textContent = '✗ A member with this name already exists.'; return;
+  }
+
+  if (role === 'eligible') {
+    eligiblePeople.push(name);
+    currentSchedule = autoAssignDays();
+  } else {
+    const badge = role === 'probation' ? 'Probation' : 'Intern';
+    const cls   = role === 'probation' ? 'badge-probation' : 'badge-intern';
+    naRows.push({ name, badge, cls, num: 0 });
+  }
+
+  syncMembers();
+  renderRoster();
+  buildMembersList();
+  nameInput.value = '';
+  feedback.className = 'members-feedback ok';
+  feedback.textContent = `✓ ${name} added.`;
+  setTimeout(() => { feedback.textContent = ''; }, 3000);
+}
+
+function removeMember(name, type) {
+  requestConfirm(`remove-${name}`, name, () => {
+    if (type === 'eligible') {
+      const idx = eligiblePeople.indexOf(name);
+      if (idx !== -1) {
+        eligiblePeople.splice(idx, 1);
+        currentSchedule.splice(idx, 1);
+        if (eligiblePeople.length > 0) currentSchedule = autoAssignDays();
+      }
+    } else {
+      const idx = naRows.findIndex(r => r.name === name);
+      if (idx !== -1) naRows.splice(idx, 1);
+    }
+    syncMembers();
+    renderRoster();
+    buildMembersList();
+  });
+}
+
+function promoteToEligible(name) {
+  const idx = naRows.findIndex(r => r.name === name);
+  if (idx === -1) return;
+  naRows.splice(idx, 1);
+  eligiblePeople.push(name);
+  currentSchedule = autoAssignDays();
+  syncMembers();
+  renderRoster();
+  buildMembersList();
+  showMemberFeedback(`✓ ${name} is now WFH eligible.`, 'ok');
+}
+
+function demoteToNA(name) {
+  const roleInput = document.getElementById(`role-select-${CSS.escape(name)}`);
+  const role = roleInput ? roleInput.value : 'probation';
+  const badge = role === 'probation' ? 'Probation' : 'Intern';
+  const cls   = role === 'probation' ? 'badge-probation' : 'badge-intern';
+
+  const idx = eligiblePeople.indexOf(name);
+  if (idx === -1) return;
+  eligiblePeople.splice(idx, 1);
+  currentSchedule.splice(idx, 1);
+  if (eligiblePeople.length > 0) currentSchedule = autoAssignDays();
+  naRows.push({ name, badge, cls, num: 0 });
+  syncMembers();
+  renderRoster();
+  buildMembersList();
+  showMemberFeedback(`✓ ${name} moved to Not Applicable.`, 'ok');
+}
+
+function showMemberFeedback(msg, type) {
+  const fb = document.getElementById('members-feedback');
+  fb.className = `members-feedback ${type}`;
+  fb.textContent = msg;
+  setTimeout(() => { fb.textContent = ''; }, 3000);
+}
+
+function autoAssignDays() {
+  const n = eligiblePeople.length;
+  if (n === 0) return [];
+
+  let best = null;
+  let bestVar = 999;
+
+  for (let attempt = 0; attempt < 2000; attempt++) {
+    const pool = new Array(n);
+    const usedIdxs = new Set();
+
+    // Lock linked groups first
+    LINKED_GROUPS.forEach(group => {
+      const pair = VALID_PAIRS[Math.floor(Math.random() * VALID_PAIRS.length)];
+      group.forEach(name => {
+        const idx = eligiblePeople.indexOf(name);
+        if (idx !== -1) { pool[idx] = pair; usedIdxs.add(idx); }
+      });
+    });
+
+    // Fill and shuffle remaining
+    const freeIdxs = Array.from({length: n}, (_,i) => i).filter(i => !usedIdxs.has(i));
+    const freePairs = freeIdxs.map((_, i) => VALID_PAIRS[i % VALID_PAIRS.length]);
+    freePairs.sort(() => Math.random() - 0.5);
+    freeIdxs.forEach((idx, i) => pool[idx] = freePairs[i]);
+
+    // Score by variance
+    const counts = {};
+    DAYS.forEach(d => counts[d] = 0);
+    pool.forEach(p => p && p.forEach(d => counts[d]++));
+    const vals = DAYS.map(d => counts[d]);
+    const variance = Math.max(...vals) - Math.min(...vals);
+
+    if (variance < bestVar) {
+      bestVar = variance;
+      best = pool.map(p => [...p]);
+      if (bestVar <= 1) break;
+    }
+  }
+
+  return best || Array.from({length: n}, (_, i) => [...VALID_PAIRS[i % VALID_PAIRS.length]]);
+}
+
+function buildMembersList() {
+  hideMemberConfirm();
+
+  // Eligible
+  const eligEl = document.getElementById('members-eligible');
+  document.getElementById('eligible-count').textContent = `${eligiblePeople.length} member${eligiblePeople.length!==1?'s':''}`;
+  if (eligiblePeople.length === 0) {
+    eligEl.innerHTML = `<div class="members-empty">No eligible members.</div>`;
+  } else {
+    eligEl.innerHTML = eligiblePeople.map((name, i) => {
+      const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
+      const isLinked = LINKED_GROUPS.some(g => g.includes(name));
+      const linkedTag = isLinked
+        ? `<span style="font-size:9px;color:#6366f1;font-weight:600;background:#eef2ff;border:1px solid #c7d2fe;border-radius:3px;padding:1px 4px;margin-left:4px">linked</span>`
+        : '';
+      return `
+      <div class="member-row" id="mrow-e-${safeId}">
+        <div class="member-row-left">
+          <span class="member-num">${i+1}</span>
+          <span class="member-name">${name}</span>${linkedTag}
+        </div>
+        <div class="member-row-right">
+          <span class="member-badge badge-group" style="color:#4338ca;background:#eef2ff;border:1px solid #c7d2fe">
+            ${currentSchedule[i] ? currentSchedule[i].join(' · ') : '—'}
+          </span>
+          <!-- Inline NA dropdown — hidden until Mark NA clicked -->
+          <div class="na-inline" id="na-inline-${safeId}" style="display:none;align-items:center;gap:5px">
+            <select class="member-role-select" id="role-select-${safeId}">
+              <option value="probation">Probation</option>
+              <option value="intern">Intern</option>
+            </select>
+            <button class="btn-demote btn-demote-confirm" data-name="${name}" data-safeid="${safeId}">Confirm</button>
+            <button class="btn-cancel-inline" data-safeid="${safeId}">✕</button>
+          </div>
+          <button class="btn-demote btn-demote-trigger" data-safeid="${safeId}" id="trigger-${safeId}">Mark as NA</button>
+          <button class="btn-remove" data-name="${name}" data-type="eligible">Remove</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // NA
+  const naEl = document.getElementById('members-na');
+  if (naRows.length === 0) {
+    naEl.innerHTML = `<div class="members-empty">No non-applicable members.</div>`;
+  } else {
+    naEl.innerHTML = naRows.map((r, i) => {
+      const isProbation = r.cls === 'badge-probation';
+      const isNotice    = r.cls === 'badge-notice';
+      const canPromote  = !isNotice;
+      const promoteBtn  = isProbation
+        ? `<button class="btn-promote btn-probation-confirm" data-name="${r.name}" title="Only activate after probation is officially completed">
+             ✓ Probation Complete
+           </button>`
+        : `<button class="btn-promote" data-name="${r.name}">Make Eligible</button>`;
+      const noteTag = isProbation
+        ? `<span class="member-note">Eligible upon probation completion</span>`
+        : isNotice
+        ? `<span class="member-note member-note-notice">Not eligible during notice period</span>`
+        : '';
+      return `
+      <div class="member-row member-row-na">
+        <div class="member-row-left" style="flex-direction:column;align-items:flex-start;gap:2px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="member-num">${eligiblePeople.length + i + 1}</span>
+            <span class="member-name">${r.name}</span>
+            <span class="member-badge ${r.cls}">${r.badge}</span>
+          </div>
+          ${noteTag}
+        </div>
+        <div class="member-row-right">
+          ${canPromote ? promoteBtn : ''}
+          <button class="btn-remove" data-name="${r.name}" data-type="na">Remove</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Wire up buttons via event delegation (avoids inline onclick quoting issues)
+  [eligEl, naEl].forEach(el => {
+    el.querySelectorAll('.btn-remove').forEach(btn => {
+      btn.addEventListener('click', () => removeMember(btn.dataset.name, btn.dataset.type));
+    });
+    el.querySelectorAll('.btn-promote').forEach(btn => {
+      if (btn.classList.contains('btn-probation-confirm')) {
+        btn.addEventListener('click', () => confirmProbationComplete(btn.dataset.name));
+      } else {
+        btn.addEventListener('click', () => promoteToEligible(btn.dataset.name));
+      }
+    });
+    // Mark as NA — trigger shows inline dropdown
+    el.querySelectorAll('.btn-demote-trigger').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sid = btn.dataset.safeid;
+        document.getElementById(`na-inline-${sid}`).style.display = 'flex';
+        btn.style.display = 'none';
+      });
+    });
+    // Confirm demote
+    el.querySelectorAll('.btn-demote-confirm').forEach(btn => {
+      btn.addEventListener('click', () => demoteToNA(btn.dataset.name));
+    });
+    // Cancel inline
+    el.querySelectorAll('.btn-cancel-inline').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sid = btn.dataset.safeid;
+        document.getElementById(`na-inline-${sid}`).style.display = 'none';
+        document.getElementById(`trigger-${sid}`).style.display = '';
+      });
+    });
+  });
+}
+
+function confirmProbationComplete(name) {
+  // Show inline confirm asking manager to confirm probation is officially done
+  const confirmBar = document.getElementById('member-confirm-bar');
+  const confirmMsg = document.getElementById('member-confirm-msg');
+  confirmMsg.textContent = `Confirm that ${name}'s probation has been officially completed by HR?`;
+  confirmBar.style.display = 'flex';
+  // Override the action button label
+  const actionBtn = confirmBar.querySelector('.btn-confirm-action');
+  if (actionBtn) {
+    actionBtn.textContent = 'Yes, Activate WFH';
+    actionBtn.style.background = '#059669';
+  }
+  pendingAction = () => promoteToEligible(name);
+}
+
+// ── RANDOM LOGIC ──
+function generateRandom() {
+  const n = eligiblePeople.length;
+  if (n === 0) {
+    document.getElementById('random-preview').innerHTML = '<span style="color:#dc2626">No eligible members to assign.</span>';
+    return;
+  }
+
+  let best = null;
+  let bestVar = 999;
+
+  for (let attempt = 0; attempt < 5000; attempt++) {
+    const pool = new Array(n);
+    const usedIdxs = new Set();
+
+    // Lock linked groups first
+    LINKED_GROUPS.forEach(group => {
+      const pair = VALID_PAIRS[Math.floor(Math.random() * VALID_PAIRS.length)];
+      group.forEach(name => {
+        const idx = eligiblePeople.indexOf(name);
+        if (idx !== -1) { pool[idx] = pair; usedIdxs.add(idx); }
+      });
+    });
+
+    // Fill and shuffle remaining
+    const freeIdxs = Array.from({length: n}, (_,i) => i).filter(i => !usedIdxs.has(i));
+    const freePairs = freeIdxs.map((_, i) => VALID_PAIRS[i % VALID_PAIRS.length]);
+    freePairs.sort(() => Math.random() - 0.5);
+    freeIdxs.forEach((idx, i) => pool[idx] = freePairs[i]);
+
+    // Score by variance (lower = better)
+    const counts = {};
+    DAYS.forEach(d => counts[d] = 0);
+    pool.forEach(p => p && p.forEach(d => counts[d]++));
+    const vals = DAYS.map(d => counts[d]);
+    const variance = Math.max(...vals) - Math.min(...vals);
+
+    if (variance < bestVar) {
+      bestVar = variance;
+      best = pool.map(p => [...p]);
+      if (bestVar <= 1) break;
+    }
+  }
+
+  if (!best) best = autoAssignDays();
+  pendingRandom = best;
+
+  // Show preview with day counts
+  const counts = {};
+  DAYS.forEach(d => counts[d] = 0);
+  best.forEach(p => p && p.forEach(d => counts[d]++));
+  const countSummary = DAYS.map(d => `${d}: <strong>${counts[d]}</strong>`).join(' · ');
+
+  document.getElementById('random-preview').innerHTML =
+    `<div style="font-size:10.5px;color:#888;margin-bottom:10px;padding:8px 10px;background:#f8fafc;border-radius:6px;border:1px solid #DDE2EB">
+      WFH per day — ${countSummary}
+    </div>` +
+    eligiblePeople.map((name, i) => {
+      const isLinked = LINKED_GROUPS.some(g => g.includes(name));
+      return `<span style="color:#000;font-weight:500">${name}</span>${isLinked ? ' <span style="font-size:10px;color:#6366f1;background:#eef2ff;border:1px solid #c7d2fe;border-radius:3px;padding:1px 4px">linked</span>' : ''} → ${best[i].join(' & ')}`;
+    }).join('<br>');
+}
+
+function applyRandom() {
+  if (!pendingRandom) {
+    document.getElementById('random-preview').innerHTML = '<span style="color:#dc2626">Generate a schedule first.</span>';
+    return;
+  }
+  currentSchedule = pendingRandom;
+  saveState();
+  renderRoster();
+  closeModal('configModal');
+}
+
+// ── CUSTOM LOGIC ──
+let customState = [];
+
+function buildCustomGrid() {
+  customState = currentSchedule.map(wfh => [...wfh]);
+  const grid = document.getElementById('custom-grid');
+  let html = `<div class="custom-header">
+    <div>Name</div>
+    ${DAYS.map(d=>`<div>${d}</div>`).join('')}
+  </div>`;
+  eligiblePeople.forEach((name, pi) => {
+    const isLinked = LINKED_GROUPS.some(g => g.includes(name));
+    const linkedTag = isLinked ? `<span style="font-size:9px;color:#6366f1;font-weight:600;margin-left:4px;background:#eef2ff;border:1px solid #c7d2fe;border-radius:3px;padding:1px 4px">linked</span>` : '';
+    html += `<div class="custom-row" id="crow-${pi}">
+      <div class="custom-name">${name}${linkedTag}</div>
+      ${DAYS.map((d, di) => {
+        const on = customState[pi] && customState[pi].includes(d);
+        return `<div class="custom-cell">
+          <div class="day-toggle ${on?'on':''}" id="tog-${pi}-${di}" onclick="toggleDay(${pi},${di})">
+            ${on ? '✓' : ''}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+  grid.innerHTML = html;
+  updateCountRow();
+  validateCustom();
+}
+
+function toggleDay(pi, di) {
+  const d = DAYS[di];
+  const tog = document.getElementById(`tog-${pi}-${di}`);
+  if (!customState[pi]) customState[pi] = [];
+  const hasDay = customState[pi].includes(d);
+  if (hasDay) {
+    customState[pi] = customState[pi].filter(x => x !== d);
+    tog.classList.remove('on'); tog.textContent = '';
+  } else {
+    customState[pi] = [...customState[pi], d].sort((a,b)=>DAYS.indexOf(a)-DAYS.indexOf(b));
+    tog.classList.add('on'); tog.textContent = '✓';
+  }
+  updateCountRow();
+  validateCustom();
+}
+
+function updateCountRow() {
+  const counts = DAYS.map(d => customState.filter(s=>s&&s.includes(d)).length);
+  let html = `<div>WFH / day <span style='font-weight:400;color:#aaa'>(4–6)</span></div>`;
+  counts.forEach(c => {
+    const cls = (c >= 4 && c <= 6) ? 'count-ok' : c > 6 ? 'count-over' : 'count-low';
+    html += `<div class="${cls}">${c}</div>`;
+  });
+  document.getElementById('wfh-count-row').innerHTML = html;
+
+}
+
+function validateCustom() {
+  const el = document.getElementById('config-validation');
+  const errors = [];
+  eligiblePeople.forEach((name, pi) => {
+    const assigned = customState[pi] || [];
+    if (assigned.length !== 2) {
+      errors.push(`${name}: needs exactly 2 WFH days (has ${assigned.length}).`);
+    } else {
+      const idxs = assigned.map(d => DAYS.indexOf(d));
+      if (Math.abs(idxs[0]-idxs[1]) === 1) errors.push(`${name}: WFH days cannot be consecutive.`);
+    }
+  });
+  DAYS.forEach(d => {
+    const c = customState.filter(s=>s&&s.includes(d)).length;
+    if (c < 2) errors.push(`${d}: only ${c} WFH — seems very low.`);
+    if (c > 8) errors.push(`${d}: ${c} WFH — seems very high.`);
+  });
+  // Linked group validation
+  LINKED_GROUPS.forEach(group => {
+    const idxs = group.map(name => eligiblePeople.indexOf(name)).filter(i => i !== -1);
+    if (idxs.length > 1) {
+      const first = JSON.stringify(customState[idxs[0]] || []);
+      const allMatch = idxs.every(i => JSON.stringify(customState[i] || []) === first);
+      if (!allMatch) {
+        errors.push(`${group.join(' & ')} must have the same WFH days (commute group).`);
+      }
+    }
+  });
+
+  if (errors.length === 0) {
+    el.className = 'config-validation ok';
+    el.textContent = '✓ Valid — ready to apply.';
+  } else {
+    el.className = 'config-validation err';
+    el.textContent = errors[0] + (errors.length > 1 ? ` (+${errors.length-1} more)` : '');
+  }
+}
+
+function applyCustom() {
+  const el = document.getElementById('config-validation');
+  if (!el.classList.contains('ok')) { el.textContent = '✗ Fix all errors before applying.'; return; }
+  currentSchedule = customState.map(s => [...s]);
+  saveState();
+  renderRoster();
+  closeModal('configModal');
+}
+
+// ── EXPORT ──
+function getFilename(ext) {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm   = String(now.getMonth()+1).padStart(2,'0');
+  const dd   = String(now.getDate()).padStart(2,'0');
+  const month = now.toLocaleString('en-US', { month: 'long' });
+  return `${yyyy}${mm}${dd} - O3 Interfaces - Design Team - WFH Roster - ${month}.${ext}`;
+}
+
+async function exportAs(type) {
+  const actions  = document.querySelector('.actions');
+  const weekTabs = document.querySelector('.week-tabs');
+  const syncEl   = document.getElementById('sync-status');
+  const footer   = document.getElementById('footer');
+  const page     = document.getElementById('main-page');
+
+  // A4 portrait @ 150dpi
+  const A4W = 1240, A4H = 1754;
+  const PAD = 36;
+
+  // Build an isolated render surface — no viewport, no fixed elements
+  const surface = document.createElement('div');
+  surface.style.cssText = [
+    'position:fixed', 'left:-9999px', 'top:0',
+    `width:${A4W}px`,
+    `min-height:${A4H}px`,
+    'background:#f6f8fb',
+    'font-family:Inter,system-ui,sans-serif',
+    'box-sizing:border-box',
+    `padding:${PAD}px ${PAD}px 0`,
+    'display:flex',
+    'flex-direction:column',
+  ].join(';');
+  document.body.appendChild(surface);
+
+  // ── Title & meta ──
+  const titleHtml = `
+    <div style="margin-bottom:6px">
+      <span style="font-size:18px;font-weight:700;letter-spacing:-0.3px">WFH</span>
+      <span style="font-size:18px;font-weight:300;letter-spacing:-0.3px"> Weekly Roster</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0;margin-bottom:20px;font-size:10.5px;">
+      <span style="font-weight:300">Headcount </span><span style="font-weight:700;margin-right:10px">${page.querySelector('#meta-headcount').textContent}</span>
+      <span style="width:1px;height:10px;background:#d9d9d9;display:inline-block;margin-right:10px"></span>
+      <span style="font-weight:300">WFH Eligible </span><span style="font-weight:700;margin-right:10px">${page.querySelector('#meta-eligible').textContent}</span>
+      <span style="width:1px;height:10px;background:#d9d9d9;display:inline-block;margin-right:10px"></span>
+      <span style="font-weight:300">WFH Per Day </span><span style="font-weight:700;margin-right:4px">${page.querySelector('#meta-wfh-day').textContent}</span><span style="font-weight:300;margin-right:10px">(4–6)</span>
+      <span style="width:1px;height:10px;background:#d9d9d9;display:inline-block;margin-right:10px"></span>
+      <span style="font-weight:300">Onsite Per Day </span><span style="font-weight:700;margin-right:10px">${page.querySelector('#meta-onsite-day').textContent}</span>
+      <span style="width:1px;height:10px;background:#d9d9d9;display:inline-block;margin-right:10px"></span>
+      <span style="font-weight:300">WFH Days / Person </span><span style="font-weight:700">2 / week</span>
+    </div>`;
+
+  // ── Table ──
+  const tableWrap = document.querySelector('.table-wrap');
+  const tableClone = tableWrap.cloneNode(true);
+  tableClone.style.cssText = [
+    'background:#fff',
+    'border:1px solid #DDE2EB',
+    'border-radius:8px',
+    'overflow:hidden',
+    'width:100%',
+    'margin-bottom:0',
+  ].join(';');
+
+  // ── Footer ──
+  const footerHtml = `
+    <div style="display:flex;align-items:center;justify-content:space-between;
+      background:#f2f2fa;border-top:1px solid #e5e5f0;
+      padding:14px ${PAD}px;margin:auto -${PAD}px 0;
+      flex-shrink:0;">
+      <svg width="24" height="26" viewBox="0 0 34 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11.3925 2.48557C16.0694 0.972885 21.3498 1.58814 25.6698 4.65744C26.4451 5.20346 27.1471 5.80581 27.787 6.43967C24.1747 5.68019 20.2846 7.12978 18.0693 10.425C15.0908 14.8375 16.1741 20.9012 20.4755 23.9328C24.1061 26.4936 28.8877 26.0857 32.0693 23.2678C31.5893 24.9058 30.8696 26.5062 29.8544 28.0061L29.8485 28.0002C24.7224 35.6013 14.4882 37.5214 7.06046 32.2678C0.0575226 27.3092 -2.00447 17.7186 2.0878 10.2619C2.19237 10.3498 2.30952 10.4378 2.43253 10.5256C5.22017 12.4965 9.05419 11.7749 10.9804 8.91916C12.3034 6.96087 12.3894 4.47526 11.3925 2.48557ZM21.5585 8.68088C20.7096 10.3943 20.87 12.5159 22.1376 14.0598C23.8238 16.1308 26.8387 16.4068 28.8632 14.6809C30.5617 13.231 31.0117 10.8016 30.1132 8.82444C30.8208 9.28889 31.4791 9.87918 32.0575 10.5696H32.0507C34.9553 14.1535 34.4883 19.4953 30.9931 22.4768C27.7008 25.2699 22.8694 25.0061 19.9032 21.9807C19.9525 21.9367 20.0143 21.8864 20.0819 21.8362C21.3802 20.7378 21.5528 18.7295 20.4638 17.3801C19.7069 16.4637 18.5554 16.0805 17.4784 16.3127C17.3862 13.7771 18.3959 11.2292 20.4325 9.50315C20.7893 9.18944 21.171 8.92559 21.5585 8.68088ZM0.777258 4.70139C1.1157 1.7766 3.70623 -0.307622 6.56144 0.0373271C9.23826 0.351151 11.2078 2.74877 11.1464 5.46018C11.0973 5.46015 11.0483 5.44172 11.0175 5.44162C9.94685 5.30983 8.96819 6.09423 8.83878 7.17991C8.75878 7.93311 9.09714 8.64301 9.65714 9.051C8.56792 10.1807 6.99866 10.821 5.34952 10.6076C5.04196 10.5763 4.753 10.5066 4.48234 10.425C5.6144 10.0922 6.5 9.09409 6.64152 7.82639C6.83206 6.15078 5.65117 4.60708 4.01456 4.41233C2.61764 4.2303 1.33724 5.08403 0.838781 6.36448C0.740332 5.82475 0.709891 5.26607 0.771399 4.68869L0.777258 4.70139Z" fill="#BCC4D1"/>
+      </svg>
+      <p style="font-size:11px"><strong>O3 Interfaces</strong> <span style="font-weight:400">Design Team</span></p>
+    </div>`;
+
+  surface.innerHTML = titleHtml + footerHtml;
+  surface.insertBefore(tableClone, surface.lastElementChild);
+
+  await new Promise(r => setTimeout(r, 120));
+
+  const canvas = await html2canvas(surface, {
+    backgroundColor: '#f6f8fb',
+    scale: 2,
+    useCORS: true,
+    width:  A4W,
+    height: A4H,
+    scrollX: 0,
+    scrollY: -window.scrollY,
+  });
+
+  document.body.removeChild(surface);
+
+  // Scale to fill A4 width
+  const srcW  = canvas.width  / 2;
+  const srcH  = canvas.height / 2;
+  const scale = A4W / srcW;
+  const drawW = A4W;
+  const drawH = Math.round(srcH * scale);
+  // Content starts at top, no centering
+  const drawX = 0;
+  const drawY = 0;
+
+  if (type === 'png') {
+    const out = document.createElement('canvas');
+    out.width = A4W; out.height = A4H;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = '#f6f8fb';
+    ctx.fillRect(0, 0, A4W, A4H);
+    ctx.drawImage(canvas, 0, 0, canvas.width, canvas.height, drawX, drawY, drawW, drawH);
+    const link = document.createElement('a');
+    link.download = getFilename('png');
+    link.href = out.toDataURL('image/png');
+    link.click();
+  } else {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [A4W, A4H], hotfixes: ['px_scaling'] });
+    const img = canvas.toDataURL('image/png');
+    pdf.addImage(img, 'PNG', drawX, drawY, drawW, drawH);
+    pdf.save(getFilename('pdf'));
+  }
+}
+
+// ── INIT ──
+(async () => { await loadState(); renderRoster(); })();
+
+</script>
+</body>
+</html>

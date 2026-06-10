@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/state.js": {
+      "runtime": "@vercel/node"
+    }
+  },
+  "rewrites": [
+    { "source": "/api/state", "destination": "/api/state.js" }
+  ]
+}
